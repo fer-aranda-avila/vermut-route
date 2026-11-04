@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15100E">
+<title>Probador háptico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15100E;
+    --surface: #1C1513;
+    --surface-2: #2E2320;
+    --line: #3D302C;
+    --text: #F4ECE2;
+    --muted: #B5A496;
+    --accent: #E5503F;
+    --ok: #B4C25E;
+    --warn: #E5A93F;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: Archivo, system-ui, sans-serif;
+    font-size: 16px; line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 28px 16px 64px; display: flex; flex-direction: column; gap: 28px; }
+  h1, h2 { margin: 0; font-weight: 800; font-stretch: 72%; text-transform: uppercase; line-height: 0.95; }
+  h1 { font-size: 40px; }
+  h2 { font-size: 26px; }
+  p { margin: 0; overflow-wrap: anywhere; }
+  td { overflow-wrap: anywhere; }
+  .muted { color: var(--muted); }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  .status { padding: 12px 14px; border-radius: 14px; font-size: 14px; border: 1px solid var(--line); background: var(--surface); }
+  .status.ok { border-color: var(--ok); }
+  .status.bad { border-color: var(--warn); }
+  .status strong { display: block; margin-bottom: 2px; }
+
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pill { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--line); background: transparent; }
+  .pill[aria-selected="true"], .pill[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+  .primary { min-height: 56px; padding: 0 22px; border-radius: 28px; border: 0; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 17px; }
+  .ghost { min-height: 48px; padding: 0 18px; border-radius: 24px; border: 1px solid var(--line); background: transparent; }
+
+  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .tabs .pill { padding: 0 8px; }
+
+  .signals { display: flex; flex-direction: column; gap: 10px; }
+  .sig { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--surface-2); }
+  .sig.active { border-color: var(--accent); background: var(--surface-2); }
+  .sig-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .sig-name { font-weight: 650; }
+  .sig-desc { font-size: 13px; color: var(--muted); }
+  .sig-code { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+  .timeline { position: relative; height: 14px; display: flex; overflow: hidden; border-radius: 3px; background: repeating-linear-gradient(90deg, transparent 0 calc(100% / 6 - 1px), var(--surface-2) calc(100% / 6 - 1px) calc(100% / 6)); }
+  .timeline span { flex: none; height: 14px; }
+  .timeline span.on { background: var(--accent); border-radius: 2px; min-width: 3px; }
+  .silence { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .sig-actions { display: flex; flex-direction: column; gap: 6px; }
+  .icon-btn { width: 44px; height: 44px; border-radius: 22px; border: 0; background: var(--accent); color: var(--bg); display: flex; align-items: center; justify-content: center; }
+  .icon-btn.secondary { background: transparent; border: 1px solid var(--line); color: var(--text); }
+  .icon-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .card { padding: 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--surface-2); display: flex; flex-direction: column; gap: 14px; }
+  .big { font-size: 22px; font-weight: 700; }
+  .answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .answers button { min-height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); padding: 8px 10px; text-align: left; }
+  .feedback { font-weight: 650; }
+  .feedback.right { color: var(--ok); }
+  .feedback.wrong { color: var(--warn); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--surface-2); }
+  th { font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+  td.num { font-family: var(--mono); white-space: nowrap; }
+
+  label { font-size: 14px; color: var(--muted); }
+  select, input[type="text"] { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 0 12px; font: inherit; }
+  input[type="text"] { width: 100%; font-family: var(--mono); font-size: 14px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 8px 14px; border-radius: 14px; border: 1px solid var(--surface-2); background: var(--surface); width: 100%; text-align: left; }
+  .switch .track { flex: none; width: 46px; height: 28px; border-radius: 14px; background: var(--line); padding: 3px; display: flex; }
+  .switch .knob { width: 22px; height: 22px; border-radius: 11px; background: var(--text); }
+  .switch[aria-checked="true"] .track { background: var(--accent); justify-content: flex-end; }
+  ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 14px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display: flex; flex-direction: column; gap: 10px">
+    <span class="eyebrow">Ruta del Vermut · Madrid</span>
+    <h1>Probador háptico</h1>
+    <p class="muted">Siente los tres lenguajes de vibración y haz un test a ciegas para ver cuál se entiende sin mirar la pantalla.</p>
+  </header>
+
+  <div id="support" class="status" role="status"></div>
+
+  <button type="button" id="wake" class="switch" role="switch" aria-checked="false">
+    <span><strong style="display: block">Mantener la pantalla encendida</strong><span class="muted" style="font-size: 13px">Si la pantalla se apaga, el móvil deja de vibrar</span></span>
+    <span class="track" aria-hidden="true"><span class="knob"></span></span>
+  </button>
+
+  <section aria-labelledby="h-lang" style="display: flex; flex-direction: column; gap: 14px">
+    <span class="eyebrow" id="h-lang">1 · Elige lenguaje</span>
+    <div class="tabs" role="tablist" aria-label="Lenguaje háptico" id="tabs"></div>
+    <div>
+      <h2 id="lang-title"></h2>
+      <p class="muted" id="lang-desc" style="margin-top: 6px; font-size: 15px"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-sig" style="display: flex; flex-direction: column; gap: 12px">
+    <div class="row" style="justify-content: space-between">
+      <span class="eyebrow" id="h-sig">2 · Siente cada señal</span>
+      <button type="button" class="ghost" id="stop">Parar</button>
+    </div>
+    <p class="muted" style="font-size: 13px">▶ suena una vez. ⟳ la repite a su ritmo real, como si fueras andando; guarda el móvil en el bolsillo y nota la señal. La barra enseña 6 segundos.</p>
+    <div class="signals" id="signals"></div>
+  </section>
+
+  <section aria-labelledby="h-test" class="card">
+    <span class="eyebrow" id="h-test">3 · Test a ciegas</span>
+    <p class="muted" style="font-size: 14px">Pulsa «Nueva señal», guarda el móvil durante la cuenta atrás y nota la vibración. Luego sácalo y di qué señal era.</p>
+    <div class="row">
+      <label for="delay">Tiempo para guardarlo</label>
+      <select id="delay">
+        <option value="0">Sin espera</option>
+        <option value="3" selected>3 s</option>
+        <option value="5">5 s</option>
+      </select>
+    </div>
+    <div class="row">
+      <button type="button" class="primary" id="next">Nueva señal</button>
+      <button type="button" class="ghost" id="replay" disabled>Repetir</button>
+    </div>
+    <p class="big" id="test-status" aria-live="polite">Listo cuando quieras.</p>
+    <div class="answers" id="answers" hidden></div>
+    <p class="feedback" id="feedback" aria-live="polite"></p>
+  </section>
+
+  <section aria-labelledby="h-res" class="card">
+    <span class="eyebrow" id="h-res">4 · Resultados</span>
+    <table>
+      <thead><tr><th scope="col">Lenguaje</th><th scope="col">Aciertos</th><th scope="col">%</th><th scope="col">Más confundida</th></tr></thead>
+      <tbody id="results"></tbody>
+    </table>
+    <div class="row">
+      <button type="button" class="ghost" id="copy">Copiar resultados</button>
+      <button type="button" class="ghost" id="reset">Borrar</button>
+    </div>
+    <p class="muted" id="copy-msg" aria-live="polite" style="font-size: 13px"></p>
+  </section>
+
+  <section aria-labelledby="h-custom" class="card">
+    <span class="eyebrow" id="h-custom">5 · Patrón propio</span>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="custom">Milisegundos, alternando vibración y pausa</label>
+      <input type="text" id="custom" value="60,120,60" inputmode="numeric" autocomplete="off" spellcheck="false">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="custom-every">Repetir cada (ms, vacío = una vez)</label>
+      <input type="text" id="custom-every" value="" inputmode="numeric" autocomplete="off" placeholder="3000">
+    </div>
+    <div class="row">
+      <button type="button" class="primary" id="custom-play">Probar</button>
+    </div>
+    <p class="muted" id="custom-msg" style="font-size: 13px" aria-live="polite"></p>
+  </section>
+
+  <section aria-labelledby="h-how" style="display: flex; flex-direction: column; gap: 10px">
+    <span class="eyebrow" id="h-how">Cómo hacer la prueba</span>
+    <ol class="steps">
+      <li>Abre esta página en Chrome, en un Android. En iPhone no vibra.</li>
+      <li>Activa «Mantener la pantalla encendida» y sube el brillo al mínimo para ahorrar batería.</li>
+      <li>Haz unas 10 rondas del test a ciegas con cada lenguaje (A, B y C).</li>
+      <li>Hazlo andando y en la calle: con el ruido y el paso, las señales se notan distinto que sentado.</li>
+      <li>Pulsa «Copiar resultados» y pégalos en el chat para decidir con datos.</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var ARRIVE = { id: 'arrive', name: 'Has llegado', desc: 'Largo · corto · largo (igual en A, B y C)', p: [500, 120, 150, 120, 500] };
+  var LANGS = {
+    A: {
+      title: 'A · Frío / caliente',
+      desc: 'El móvil late mientras caminas hacia el bar. Si te desvías, se calla. Tú eliges las calles.',
+      signals: [
+        { id: 'ok', name: 'Vas bien', desc: 'Doble tic cada 3 s', p: [60, 120, 60], every: 3000 },
+        { id: 'off', name: 'Te desvías', desc: 'Silencio total', p: [] },
+        { id: 'back', name: 'Vuelves al rumbo', desc: 'Un toque largo de confirmación', p: [300] },
+        { id: 'near', name: 'A menos de 100 m', desc: 'Tic-tic-tic cada segundo', p: [60, 80, 60, 80, 60], every: 1000 },
+        ARRIVE
+      ]
+    },
+    B: {
+      title: 'B · Giro a giro',
+      desc: 'Un GPS sin voz. Unos 30 m antes de cada cruce, un patrón te dice qué hacer. Entre cruce y cruce, silencio.',
+      signals: [
+        { id: 'left', name: 'Gira a la izquierda', desc: 'Dos toques cortos', p: [120, 150, 120] },
+        { id: 'right', name: 'Gira a la derecha', desc: 'Un toque largo', p: [450] },
+        { id: 'straight', name: 'Sigue recto', desc: 'Silencio', p: [] },
+        { id: 'uturn', name: 'Media vuelta', desc: 'Ráfaga de toques: te has pasado', p: [80, 80, 80, 80, 80, 80, 80, 80, 80] },
+        ARRIVE
+      ]
+    },
+    C: {
+      title: 'C · Radar de distancia',
+      desc: 'No hay direcciones, solo un latido. Late más rápido cuanto más cerca estás. Si te alejas, zumba.',
+      signals: [
+        { id: 'far', name: 'Lejos · más de 300 m', desc: 'Un latido cada 5 s', p: [80], every: 5000 },
+        { id: 'mid', name: 'Cerca · 100–300 m', desc: 'Un latido cada 2 s', p: [80], every: 2000 },
+        { id: 'close', name: 'Casi · menos de 100 m', desc: 'Un latido cada 0,7 s', p: [80], every: 700 },
+        { id: 'away', name: 'Te alejas', desc: 'Zumbido largo cada 3 s', p: [700], every: 3000 },
+        ARRIVE
+      ]
+    }
+  };
+  var WINDOW_MS = 6000;
+  var STORE_KEY = 'vermut-haptic-test-v1';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var canVibrate = typeof navigator.vibrate === 'function';
+  var lang = 'A';
+  var loop = null; // { timer, key }
+  var activeTimer = null;
+  var test = { sig: null, lang: null, seq: null, answered: true, busy: false };
+  var attempts = load();
+
+  // ---------- helpers ----------
+  function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+
+  function vibrate(pattern) {
+    if (!canVibrate) return false;
+    try { return navigator.vibrate(pattern); } catch (e) { return false; }
+  }
+
+  // A pattern repeated at its real rhythm, n times, as one vibrate() array.
+  function sequence(sig, maxMs) {
+    if (!sig.every || !sig.p.length) return sig.p.slice();
+    var n = Math.max(2, Math.min(6, Math.floor(maxMs / sig.every) + 1));
+    var gap = Math.max(0, sig.every - sum(sig.p));
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      out = out.concat(sig.p);
+      if (i < n - 1) out.push(gap);
+    }
+    return out;
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') node.textContent = attrs[k];
+      else if (k === 'html') node.innerHTML = attrs[k];
+      else if (k.indexOf('on') === 0) node.addEventListener(k.slice(2), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function timeline(sig) {
+    var box = el('div', { class: 'timeline', 'aria-hidden': 'true' });
+    var seq = sig.every ? sequence(sig, WINDOW_MS) : sig.p;
+    var t = 0;
+    seq.forEach(function (ms, i) {
+      if (t >= WINDOW_MS) return;
+      var w = Math.min(ms, WINDOW_MS - t);
+      t += ms;
+      var s = el('span', { class: i % 2 === 0 ? 'on' : '' });
+      s.style.width = (w / WINDOW_MS * 100) + '%';
+      box.appendChild(s);
+    });
+    return box;
+  }
+
+  var PLAY_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
+  var LOOP_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>';
+
+  // ---------- support banner ----------
+  function renderSupport(blocked) {
+    var box = $('support');
+    if (!canVibrate) {
+      box.className = 'status bad';
+      box.innerHTML = '<strong>Este navegador no puede vibrar</strong>Pasa en iPhone y en Safari. Abre la página en Chrome, en un Android. Puedes ver los patrones, pero no sentirlos.';
+    } else if (blocked) {
+      box.className = 'status bad';
+      box.innerHTML = '<strong>El navegador ha bloqueado la vibración</strong>Comprueba que la vibración del móvil está activada, que no está en ahorro de batería y que abres la página directamente, no dentro de otra app.';
+    } else {
+      box.className = 'status ok';
+      box.innerHTML = '<strong>Listo para vibrar</strong>Pulsa ▶ en cualquier señal. La primera vez puede tardar un instante.';
+    }
+  }
+
+  // ---------- tabs + signals ----------
+  function renderTabs() {
+    var tabs = $('tabs');
+    tabs.innerHTML = '';
+    Object.keys(LANGS).forEach(function (k) {
+      tabs.appendChild(el('button', {
+        type: 'button', role: 'tab', class: 'pill', 'aria-selected': String(k === lang),
+        text: LANGS[k].title.split(' · ')[0] + ' · ' + LANGS[k].title.split(' · ')[1].split(' ')[0],
+        onclick: function () { setLang(k); }
+      }));
+    });
+    $('lang-title').textContent = LANGS[lang].title;
+    $('lang-desc').textContent = LANGS[lang].desc;
+  }
+
+  function renderSignals() {
+    var list = $('signals');
+    list.innerHTML = '';
+    LANGS[lang].signals.forEach(function (sig, i) {
+      var key = lang + ':' + sig.id;
+      var silent = sig.p.length === 0;
+      var looping = loop && loop.key === key;
+      var body = el('div', { class: 'sig-body' }, [
+        el('div', {}, [
+          el('div', { class: 'sig-name', text: sig.name }),
+          el('div', { class: 'sig-desc', text: sig.desc })
+        ]),
+        silent ? el('div', { class: 'silence', text: '· · · silencio · · ·' }) : timeline(sig),
+        silent ? null : el('div', { class: 'sig-code', text: '[' + sig.p.join(',') + ']' + (sig.every ? ' cada ' + sig.every + ' ms' : '') })
+      ]);
+      var actions = el('div', { class: 'sig-actions' }, [
+        el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Probar una vez: ' + sig.name, html: PLAY_ICON, onclick: function () { playOnce(sig, i); } }),
+        el('button', { type: 'button', class: 'icon-btn secondary', 'aria-label': 'Repetir en bucle: ' + sig.name, 'aria-pressed': String(!!looping), html: LOOP_ICON, onclick: function () { toggleLoop(sig, key); } })
+      ]);
+      if (silent) actions.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+      list.appendChild(el('div', { class: 'sig' + (looping ? ' active' : ''), id: 'sig-' + i }, [body, actions]));
+    });
+  }
+
+  function flash(i, ms) {
+    var node = $('sig-' + i);
+    if (!node) return;
+    node.classList.add('active');
+    clearTimeout(activeTimer);
+    activeTimer = setTimeout(function () {
+      if (!(loop && node.querySelector('[aria-pressed="true"]'))) node.classList.remove('active');
+    }, ms + 150);
+  }
+
+  function setLang(k) {
+    lang = k;
+    stopAll();
+    renderTabs();
+    renderSignals();
+    resetTestPrompt();
+  }
+
+  function playOnce(sig, i) {
+    stopLoop();
+    var seq = sequence(sig, 4000);
+    var ok = vibrate(seq);
+    renderSupport(ok === false);
+    flash(i, sum(seq));
+  }
+
+  function toggleLoop(sig, key) {
+    if (loop && loop.key === key) { stopAll(); return; }
+    stopLoop();
+    var every = sig.every || 4000;
+    var ok = vibrate(sig.p);
+    renderSupport(ok === false);
+    loop = { key: key, timer: setInterval(function () { vibrate(sig.p); }, every) };
+    renderSignals();
+  }
+
+  function stopLoop() {
+    if (loop) { clearInterval(loop.timer); loop = null; }
+  }
+
+  function stopAll() {
+    stopLoop();
+    vibrate(0);
+    renderSignals();
+  }
+
+  // ---------- blind test ----------
+  function candidates(k) { return LANGS[k].signals.filter(function (s) { return s.p.length > 0; }); }
+
+  function resetTestPrompt() {
+    test = { sig: null, lang: null, seq: null, answered: true, busy: false };
+    $('answers').hidden = true;
+    $('answers').innerHTML = '';
+    $('feedback').textContent = '';
+    $('replay').disabled = true;
+    $('next').disabled = false;
+    $('test-status').textContent = 'Listo con el lenguaje ' + lang + '.';
+  }
+
+  function nextSignal() {
+    if (test.busy) return;
+    stopAll();
+    var pool = candidates(lang);
+    var sig = pool[Math.floor(Math.random() * pool.length)];
+    test = { sig: sig, lang: lang, seq: sequence(sig, 8000), answered: false, busy: true };
+    $('feedback').textContent = '';
+    $('answers').hidden = true;
+    $('next').disabled = true;
+    $('replay').disabled = true;
+    countdown(Number($('delay').value), function () { fire(true); });
+  }
+
+  function countdown(secs, done) {
+    if (secs <= 0) { done(); return; }
+    $('test-status').textContent = 'Guárdalo en el bolsillo… ' + secs;
+    setTimeout(function () { countdown(secs - 1, done); }, 1000);
+  }
+
+  function fire(showAnswersAfter) {
+    $('test-status').textContent = 'Vibrando… ¿qué señal es?';
+    var ok = vibrate(test.seq);
+    renderSupport(ok === false);
+    setTimeout(function () {
+      test.busy = false;
+      $('test-status').textContent = test.answered ? 'Pulsa «Nueva señal» para seguir.' : 'Elige la señal que has notado.';
+      $('next').disabled = false;
+      $('replay').disabled = false;
+      if (showAnswersAfter) renderAnswers();
+    }, sum(test.seq) + 300);
+  }
+
+  function replay() {
+    if (!test.sig || test.busy) return;
+    test.busy = true;
+    $('replay').disabled = true;
+    $('next').disabled = true;
+    fire(false);
+  }
+
+  function renderAnswers() {
+    var box = $('answers');
+    box.innerHTML = '';
+    candidates(test.lang).forEach(function (s) {
+      box.appendChild(el('button', { type: 'button', text: s.name, onclick: function () { answer(s); } }));
+    });
+    box.hidden = false;
+  }
+
+  function answer(s) {
+    if (test.answered) return;
+    test.answered = true;
+    var right = s.id === test.sig.id;
+    attempts.push({ lang: test.lang, played: test.sig.id, answered: s.id, t: Date.now() });
+    save();
+    var fb = $('feedback');
+    fb.className = 'feedback ' + (right ? 'right' : 'wrong');
+    fb.textContent = right ? '¡Bien! Era «' + test.sig.name + '».' : 'No: era «' + test.sig.name + '», no «' + s.name + '».';
+    $('answers').hidden = true;
+    $('test-status').textContent = 'Pulsa «Nueva señal» para seguir.';
+    renderResults();
+  }
+
+  // ---------- results ----------
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch (e) { return []; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(attempts)); } catch (e) { /* sin almacenamiento: los resultados duran esta sesión */ }
+  }
+  function nameOf(k, id) {
+    var s = LANGS[k].signals.filter(function (x) { return x.id === id; })[0];
+    return s ? s.name : id;
+  }
+
+  function stats(k) {
+    var rows = attempts.filter(function (a) { return a.lang === k; });
+    var ok = rows.filter(function (a) { return a.played === a.answered; }).length;
+    var conf = {};
+    rows.forEach(function (a) {
+      if (a.played !== a.answered) {
+        var key = nameOf(k, a.played) + ' → ' + nameOf(k, a.answered);
+        conf[key] = (conf[key] || 0) + 1;
+      }
+    });
+    var worst = Object.keys(conf).sort(function (x, y) { return conf[y] - conf[x]; })[0];
+    return { n: rows.length, ok: ok, pct: rows.length ? Math.round(ok / rows.length * 100) : null, worst: worst ? worst + ' (' + conf[worst] + ')' : '—', conf: conf };
+  }
+
+  function renderResults() {
+    var body = $('results');
+    body.innerHTML = '';
+    Object.keys(LANGS).forEach(function (k) {
+      var s = stats(k);
+      body.appendChild(el('tr', {}, [
+        el('td', { text: LANGS[k].title }),
+        el('td', { class: 'num', text: s.ok + '/' + s.n }),
+        el('td', { class: 'num', text: s.pct === null ? '—' : s.pct + '%' }),
+        el('td', { text: s.worst, style: 'font-size: 13px' })
+      ]));
+    });
+  }
+
+  function copyResults() {
+    var lines = ['Probador háptico · resultados (' + new Date().toLocaleString('es-ES') + ')'];
+    Object.keys(LANGS).forEach(function (k) {
+      var s = stats(k);
+      lines.push(LANGS[k].title + ': ' + s.ok + '/' + s.n + (s.pct === null ? '' : ' (' + s.pct + '%)'));
+      Object.keys(s.conf).forEach(function (c) { lines.push('  confusión ' + c + ': ' + s.conf[c]); });
+    });
+    lines.push('Dispositivo: ' + navigator.userAgent);
+    var text = lines.join('\n');
+    var msg = $('copy-msg');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = 'Copiado. Pégalo en el chat.'; },
+        function () { msg.textContent = text; });
+    } else {
+      msg.textContent = text;
+    }
+  }
+
+  // ---------- custom pattern ----------
+  function playCustom() {
+    stopLoop();
+    var p = $('custom').value.split(/[\s,;]+/).filter(Boolean).map(Number);
+    var every = Number($('custom-every').value) || 0;
+    var msg = $('custom-msg');
+    if (!p.length || p.some(function (n) { return !isFinite(n) || n < 0 || n > 10000; })) {
+      msg.textContent = 'Escribe números entre 0 y 10000 separados por comas, por ejemplo 60,120,60.';
+      return;
+    }
+    var seq = every ? sequence({ p: p, every: every }, 8000) : p;
+    var ok = vibrate(seq);
+    renderSupport(ok === false);
+    msg.textContent = 'Sonando: [' + seq.join(',') + '] · ' + (sum(seq) / 1000).toFixed(1) + ' s';
+  }
+
+  // ---------- wake lock ----------
+  var wakeLock = null;
+  var wakeWanted = false;
+  function setWake(on) {
+    wakeWanted = on;
+    var btn = $('wake');
+    if (!('wakeLock' in navigator)) {
+      btn.setAttribute('aria-checked', 'false');
+      btn.querySelector('.muted').textContent = 'Este navegador no puede mantener la pantalla encendida: alarga el tiempo de bloqueo en Ajustes.';
+      return;
+    }
+    if (on) {
+      navigator.wakeLock.request('screen').then(function (l) {
+        wakeLock = l;
+        btn.setAttribute('aria-checked', 'true');
+        l.addEventListener('release', function () { if (!wakeWanted) btn.setAttribute('aria-checked', 'false'); });
+      }).catch(function () { btn.setAttribute('aria-checked', 'false'); });
+    } else {
+      if (wakeLock) wakeLock.release();
+      wakeLock = null;
+      btn.setAttribute('aria-checked', 'false');
+    }
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && wakeWanted) setWake(true);
+    if (document.visibilityState === 'hidden') stopLoop();
+  });
+
+  // ---------- wire up ----------
+  $('wake').addEventListener('click', function () { setWake(!wakeWanted); });
+  $('stop').addEventListener('click', stopAll);
+  $('next').addEventListener('click', nextSignal);
+  $('replay').addEventListener('click', replay);
+  $('copy').addEventListener('click', copyResults);
+  $('reset').addEventListener('click', function () {
+    if (!confirm('¿Borrar todos los resultados del test?')) return;
+    attempts = []; save(); renderResults(); $('copy-msg').textContent = '';
+  });
+  $('custom-play').addEventListener('click', playCustom);
+
+  renderSupport(false);
+  renderTabs();
+  renderSignals();
+  renderResults();
+  resetTestPrompt();
+})();
+</script>
+</body>
+</html>

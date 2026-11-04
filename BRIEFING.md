@@ -4,6 +4,8 @@ Una ruta a pie por vermuterías de Madrid **sin mapa**: el móvil va en el bolsi
 
 Prototipo (canvas de diseño): https://claude.ai/artifact/VPpvtQ1zctbNzwm24ETsSD
 
+Probador háptico para Android: [`docs/index.html`](docs/index.html), que GitHub Pages publica en https://fer-aranda-avila.github.io/vermut-route/ cuando se activa Pages con la carpeta `/docs`.
+
 ## Decisiones tomadas
 
 | Tema | Decisión |
