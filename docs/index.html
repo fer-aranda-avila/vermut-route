@@ -48,7 +48,7 @@
 
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .pill { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--line); background: transparent; }
-  .pill[aria-selected="true"], .pill[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+  .pill[aria-selected="true"], .pill[aria-pressed="true"], .pill[aria-checked="true"] { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
   .primary { min-height: 56px; padding: 0 22px; border-radius: 28px; border: 0; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 17px; }
   .ghost { min-height: 48px; padding: 0 18px; border-radius: 24px; border: 1px solid var(--line); background: transparent; }
 
@@ -104,6 +104,27 @@
   </header>
 
   <div id="support" class="status" role="status"></div>
+
+  <section aria-labelledby="h-diag" class="card">
+    <span class="eyebrow" id="h-diag">0 · ¿Vibra tu móvil?</span>
+    <p class="muted" style="font-size: 14px">Empieza por aquí. Si «Vibrar 2 s» no se nota, el problema está en un ajuste del móvil, no en los patrones.</p>
+    <div class="row">
+      <button type="button" class="primary" id="diag-long">Vibrar 2 s</button>
+      <button type="button" class="ghost" id="diag-triple">3 pulsos de 0,5 s</button>
+    </div>
+    <table>
+      <tbody id="diag-table"></tbody>
+    </table>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 14px; color: var(--muted)">Intensidad de los patrones</span>
+      <div class="row" role="radiogroup" aria-label="Intensidad de los patrones" id="strength"></div>
+      <p class="muted" style="font-size: 13px" id="strength-help"></p>
+    </div>
+    <div class="row">
+      <button type="button" class="ghost" id="diag-copy">Copiar diagnóstico</button>
+    </div>
+    <p class="muted" id="diag-msg" aria-live="polite" style="font-size: 13px"></p>
+  </section>
 
   <button type="button" id="wake" class="switch" role="switch" aria-checked="false">
     <span><strong style="display: block">Mantener la pantalla encendida</strong><span class="muted" style="font-size: 13px">Si la pantalla se apaga, el móvil deja de vibrar</span></span>
@@ -177,6 +198,18 @@
     <p class="muted" id="custom-msg" style="font-size: 13px" aria-live="polite"></p>
   </section>
 
+  <section aria-labelledby="h-fix" style="display: flex; flex-direction: column; gap: 10px">
+    <span class="eyebrow" id="h-fix">Si no vibra</span>
+    <ol class="steps">
+      <li>Mira el panel de diagnóstico. Si «Última llamada» dice <em>Aceptada</em> pero no notas nada, Chrome ha enviado la orden y es Android quien la ignora: revisa los ajustes de abajo.</li>
+      <li>Ajustes → Sonido y vibración: comprueba que la vibración está activada y que ninguna barra de intensidad está a cero, sobre todo la de «respuesta táctil» o «interacción táctil».</li>
+      <li>En Samsung: Ajustes → Sonidos y vibración → Vibración del sistema, y activa la vibración al tocar. En Pixel: Ajustes → Sonido y vibración → Vibración y respuesta táctil.</li>
+      <li>Quita «No molestar» y el modo silencio: en muchos móviles, en modo silencio Chrome no vibra aunque el resto esté bien.</li>
+      <li>Si abriste el enlace desde WhatsApp, Gmail u otra app, usa ⋮ → «Abrir en Chrome».</li>
+      <li>Actualiza Chrome desde Play Store y prueba la intensidad «Fuerte».</li>
+    </ol>
+  </section>
+
   <section aria-labelledby="h-how" style="display: flex; flex-direction: column; gap: 10px">
     <span class="eyebrow" id="h-how">Cómo hacer la prueba</span>
     <ol class="steps">
@@ -243,9 +276,105 @@
   // ---------- helpers ----------
   function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
 
-  function vibrate(pattern) {
+  // ---------- intensity + diagnostics ----------
+  var STRENGTHS = [
+    { id: 'normal', label: 'Normal', min: 0, help: 'Los pulsos tal y como están diseñados (60–80 ms los más cortos).' },
+    { id: 'fuerte', label: 'Fuerte', min: 150, help: 'Ningún pulso dura menos de 150 ms. Úsalo si los toques cortos no se notan.' },
+    { id: 'max', label: 'Muy fuerte', min: 300, help: 'Ningún pulso dura menos de 300 ms. Se nota más, pero los patrones rápidos se parecen más entre sí.' }
+  ];
+  var STRENGTH_KEY = 'vermut-haptic-strength';
+  var strength = (function () { try { return localStorage.getItem(STRENGTH_KEY) || 'normal'; } catch (e) { return 'normal'; } })();
+  var lastCall = { pattern: null, result: null, at: null, error: null };
+
+  function minPulse() {
+    var s = STRENGTHS.filter(function (x) { return x.id === strength; })[0];
+    return s ? s.min : 0;
+  }
+
+  // Lengthen vibration segments (even indices) to the chosen minimum and
+  // take the extra time out of the following pause, so the rhythm holds.
+  function applyStrength(pattern) {
+    var min = minPulse();
+    if (!min || !Array.isArray(pattern)) return pattern;
+    var out = pattern.slice();
+    for (var i = 0; i < out.length; i += 2) {
+      if (out[i] > 0 && out[i] < min) {
+        var extra = min - out[i];
+        out[i] = min;
+        if (i + 1 < out.length) out[i + 1] = Math.max(60, out[i + 1] - extra);
+      }
+    }
+    return out;
+  }
+
+  function vibrate(pattern, raw) {
     if (!canVibrate) return false;
-    try { return navigator.vibrate(pattern); } catch (e) { return false; }
+    var p = raw ? pattern : applyStrength(pattern);
+    var result;
+    try { result = navigator.vibrate(p); lastCall.error = null; } catch (e) { result = false; lastCall.error = String(e && e.message || e); }
+    if (p !== 0 && !(Array.isArray(p) && p.length === 0)) {
+      lastCall.pattern = p; lastCall.result = result; lastCall.at = new Date();
+      renderDiag();
+    }
+    return result;
+  }
+
+  function chromeVersion() {
+    var m = navigator.userAgent.match(/Chrome\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
+  function diagRows() {
+    var ua = navigator.userAgent;
+    var inApp = /; wv\)/.test(ua) || /FBAN|FBAV|Instagram|Line\/|WhatsApp|GSA\//.test(ua);
+    var samsung = /SamsungBrowser/.test(ua);
+    var ua2 = navigator.userActivation;
+    return [
+      ['Versión de la página', 'v3'],
+      ['Navegador', samsung ? 'Samsung Internet ' + ((ua.match(/SamsungBrowser\/([\d.]+)/) || [])[1] || '') : (chromeVersion() ? 'Chrome ' + chromeVersion() : 'No es Chrome')],
+      ['Android', ((ua.match(/Android ([\d.]+)/) || [])[1]) || 'No detectado'],
+      ['¿Dentro de otra app?', inApp ? 'Sí: ábrelo en Chrome' : 'No'],
+      ['navigator.vibrate', canVibrate ? 'Disponible' : 'No existe'],
+      ['Has tocado la página', ua2 ? (ua2.hasBeenActive ? 'Sí' : 'Todavía no') : 'Desconocido'],
+      ['Última llamada', lastCall.at ? (lastCall.result ? 'Aceptada (true)' : 'Rechazada (false)') + ' · ' + lastCall.at.toLocaleTimeString('es-ES') : 'Ninguna'],
+      ['Último patrón', lastCall.pattern ? '[' + [].concat(lastCall.pattern).join(',') + ']' : '—'],
+      ['Error', lastCall.error || '—'],
+      ['Intensidad', STRENGTHS.filter(function (x) { return x.id === strength; })[0].label]
+    ];
+  }
+
+  function renderDiag() {
+    var body = document.getElementById('diag-table');
+    if (!body) return;
+    body.innerHTML = '';
+    diagRows().forEach(function (r) {
+      body.appendChild(el('tr', {}, [el('td', { text: r[0], style: 'color: var(--muted); font-size: 13px' }), el('td', { text: r[1], style: 'font-size: 13px' })]));
+    });
+  }
+
+  function renderStrength() {
+    var box = document.getElementById('strength');
+    box.innerHTML = '';
+    STRENGTHS.forEach(function (s) {
+      box.appendChild(el('button', {
+        type: 'button', role: 'radio', class: 'pill', 'aria-checked': String(s.id === strength), text: s.label,
+        onclick: function () {
+          strength = s.id;
+          try { localStorage.setItem(STRENGTH_KEY, s.id); } catch (e) { /* solo esta sesión */ }
+          renderStrength(); renderDiag();
+          vibrate([400], true);
+        }
+      }));
+    });
+    document.getElementById('strength-help').textContent = STRENGTHS.filter(function (x) { return x.id === strength; })[0].help;
+  }
+
+  function copyDiag() {
+    var text = 'Probador háptico · diagnóstico\n' + diagRows().map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') + '\nUA: ' + navigator.userAgent;
+    var msg = document.getElementById('diag-msg');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = 'Copiado. Pégalo en el chat.'; }, function () { msg.textContent = text; });
+    } else { msg.textContent = text; }
   }
 
   // A pattern repeated at its real rhythm, n times, as one vibrate() array.
@@ -299,7 +428,7 @@
       box.innerHTML = '<strong>Este navegador no puede vibrar</strong>Pasa en iPhone y en Safari. Abre la página en Chrome, en un Android. Puedes ver los patrones, pero no sentirlos.';
     } else if (blocked) {
       box.className = 'status bad';
-      box.innerHTML = '<strong>El navegador ha bloqueado la vibración</strong>Comprueba que la vibración del móvil está activada, que no está en ahorro de batería y que abres la página directamente, no dentro de otra app.';
+      box.innerHTML = '<strong>Chrome ha rechazado la vibración</strong>Suele pasar si la pestaña no está en primer plano o si la página está abierta dentro de otra app (WhatsApp, Instagram…). Ábrela directamente en Chrome y toca la página antes de probar.';
     } else {
       box.className = 'status ok';
       box.innerHTML = '<strong>Listo para vibrar</strong>Pulsa ▶ en cualquier señal. La primera vez puede tardar un instante.';
@@ -580,7 +709,12 @@
     attempts = []; save(); renderResults(); $('copy-msg').textContent = '';
   });
   $('custom-play').addEventListener('click', playCustom);
+  $('diag-long').addEventListener('click', function () { renderSupport(vibrate([2000], true) === false); });
+  $('diag-triple').addEventListener('click', function () { renderSupport(vibrate([500, 300, 500, 300, 500], true) === false); });
+  $('diag-copy').addEventListener('click', copyDiag);
 
+  renderStrength();
+  renderDiag();
   renderSupport(false);
   renderTabs();
   renderSignals();
