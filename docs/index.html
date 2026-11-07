@@ -112,6 +112,15 @@
       <button type="button" class="primary" id="diag-long">Vibrar 2 s</button>
       <button type="button" class="ghost" id="diag-triple">3 pulsos de 0,5 s</button>
     </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 14px; color: var(--muted)">Prueba de duración: ¿cuáles notas?</span>
+      <div class="row">
+        <button type="button" class="ghost" data-ms="300">0,3 s</button>
+        <button type="button" class="ghost" data-ms="900">0,9 s</button>
+        <button type="button" class="ghost" data-ms="1100">1,1 s</button>
+      </div>
+      <p class="muted" style="font-size: 13px">Si solo notas la de 1,1 s, Android está tratando las vibraciones cortas como «vibración al tocar» y ese ajuste está apagado. Actívalo (pasos en «Si no vibra», abajo) y vuelve a probar.</p>
+    </div>
     <table>
       <tbody id="diag-table"></tbody>
     </table>
@@ -201,9 +210,9 @@
   <section aria-labelledby="h-fix" style="display: flex; flex-direction: column; gap: 10px">
     <span class="eyebrow" id="h-fix">Si no vibra</span>
     <ol class="steps">
-      <li>Mira el panel de diagnóstico. Si «Última llamada» dice <em>Aceptada</em> pero no notas nada, Chrome ha enviado la orden y es Android quien la ignora: revisa los ajustes de abajo.</li>
-      <li>Ajustes → Sonido y vibración: comprueba que la vibración está activada y que ninguna barra de intensidad está a cero, sobre todo la de «respuesta táctil» o «interacción táctil».</li>
-      <li>En Samsung: Ajustes → Sonidos y vibración → Vibración del sistema, y activa la vibración al tocar. En Pixel: Ajustes → Sonido y vibración → Vibración y respuesta táctil.</li>
+      <li><strong>Si «Vibrar 2 s» funciona pero los patrones no</strong>, es lo más habitual: Android trata como «vibración al tocar» cualquier vibración de menos de 1 s que manda una web. Si ese ajuste está apagado o a cero, la ignora.</li>
+      <li>Actívalo. En Samsung: Ajustes → Sonidos y vibración → Vibración del sistema → «Interacciones táctiles» activado, y en «Intensidad de vibración», la barra de «Interacción táctil» por encima de cero. En Pixel: Ajustes → Sonido y vibración → Vibración y respuesta táctil → «Respuesta táctil» activada. En Xiaomi: Ajustes → Sonido y vibración → «Respuesta háptica». El nombre cambia según el móvil: busca «táctil» o «háptica» en los Ajustes.</li>
+      <li>Mira el panel de diagnóstico. Si «Última llamada» dice <em>Aceptada</em> pero no notas nada, Chrome ha enviado la orden y es Android quien la ignora.</li>
       <li>Quita «No molestar» y el modo silencio: en muchos móviles, en modo silencio Chrome no vibra aunque el resto esté bien.</li>
       <li>Si abriste el enlace desde WhatsApp, Gmail u otra app, usa ⋮ → «Abrir en Chrome».</li>
       <li>Actualiza Chrome desde Play Store y prueba la intensidad «Fuerte».</li>
@@ -330,7 +339,7 @@
     var samsung = /SamsungBrowser/.test(ua);
     var ua2 = navigator.userActivation;
     return [
-      ['Versión de la página', 'v3'],
+      ['Versión de la página', 'v4'],
       ['Navegador', samsung ? 'Samsung Internet ' + ((ua.match(/SamsungBrowser\/([\d.]+)/) || [])[1] || '') : (chromeVersion() ? 'Chrome ' + chromeVersion() : 'No es Chrome')],
       ['Android', ((ua.match(/Android ([\d.]+)/) || [])[1]) || 'No detectado'],
       ['¿Dentro de otra app?', inApp ? 'Sí: ábrelo en Chrome' : 'No'],
@@ -712,6 +721,9 @@
   $('diag-long').addEventListener('click', function () { renderSupport(vibrate([2000], true) === false); });
   $('diag-triple').addEventListener('click', function () { renderSupport(vibrate([500, 300, 500, 300, 500], true) === false); });
   $('diag-copy').addEventListener('click', copyDiag);
+  document.querySelectorAll('[data-ms]').forEach(function (b) {
+    b.addEventListener('click', function () { renderSupport(vibrate([Number(b.getAttribute('data-ms'))], true) === false); });
+  });
 
   renderStrength();
   renderDiag();

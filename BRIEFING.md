@@ -94,6 +94,7 @@ El plano tiene 15 barras. No pude descargar el PDF desde el entorno de trabajo, 
 
 - Completar los 4 bares que faltan y confirmar las direcciones con el PDF.
 - Personalizar los criterios de la ficha.
+- **Android y web, hallazgo de la prueba:** Android trata como «vibración al tocar» cualquier vibración de menos de 1 s que manda una web. Si ese ajuste está apagado, la ignora (la de 2 s sí vibra). Una web no puede indicar a Android de qué tipo es su vibración; una app nativa sí, por ejemplo como notificación o alarma, y así no depende de ese ajuste. Es otro motivo para hacer la versión final como app nativa.
 - iOS: Safari no permite que una web haga vibrar el móvil. Para iPhone hace falta una app nativa (Core Haptics) o empaquetar la web con Capacitor o React Native.
 - Probar en la calle cuál de los lenguajes A, B o C se entiende sin mirar la pantalla.
 - Avisar de que se beba con moderación y de que, al cruzar, conviene mirar el semáforo y no confiar solo en la vibración.
