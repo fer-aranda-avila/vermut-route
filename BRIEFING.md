@@ -64,22 +64,32 @@ Los tres lenguajes comparten el patrón de **llegada**: `[500,120,150,120,500]`,
 
 ## Bares del plano (Academia Madrileña de Gastronomía / esMADRID)
 
-El plano tiene 15 barras. No pude descargar el PDF desde el entorno de trabajo, así que estos 11 nombres salen de prensa y fuentes oficiales. **Hay que confirmar las direcciones con el plano.**
+Los 15 bares, con la numeración, las direcciones, los barrios y el metro tal y como vienen en el plano oficial.
 
-| # | Bar | Zona | Dirección |
-| --- | --- | --- | --- |
-| 1 | Bodega de la Ardosa | Malasaña | C/ Colón, 13 |
-| 2 | Casa Camacho “Yayos” | Malasaña | C/ San Andrés, 4 |
-| 3 | Casa Maravillas | Malasaña | por confirmar |
-| 4 | Sifón Bodega Colmado | Malasaña | por confirmar |
-| 5 | Bodegas El Maño | Conde Duque | C/ de la Palma, 64 |
-| 6 | Taberna Ángel Sierra | Chueca | C/ Gravina, 11 |
-| 7 | Hermanos Vinagre | por confirmar (tiene varios locales) | por confirmar |
-| 8 | Casa Alberto | Las Letras | C/ Huertas, 18 |
-| 9 | Bodegas Rosell | Atocha | C/ General Lacy, 11 |
-| 10 | El Anciano Rey de los Vinos | Austrias | C/ Bailén, 19 |
-| 11 | Bodegas Alfaro | Chamberí | por confirmar |
-| 12–15 | por confirmar del plano | | |
+| # | Bar | Dirección | Barrio (según el plano) | Metro |
+| --- | --- | --- | --- | --- |
+| 1 | Bodega de la Ardosa | C/ Colón, 13 | Recoletos | Tribunal · Santo Domingo |
+| 2 | Casa Camacho “Yayos” | C/ San Andrés, 4 | Universidad | Tribunal |
+| 3 | Taberna Ángel Sierra | C/ Gravina, 11 | Chueca | Tribunal · Santo Domingo |
+| 4 | Casa Alberto | C/ de las Huertas, 18 | Las Letras | Antón Martín · Sol |
+| 5 | El Anciano Rey de los Vinos | C/ de Bailén, 19 | Palacio | Ópera · La Latina |
+| 6 | Bodegas Rosell | C/ del General Lacy, 14 | Delicias | Delicias · Palos de la Frontera |
+| 7 | Bodegas Casas | Av. Ciudad de Barcelona, 23 (y otro local en el 57) | Pacífico | Pacífico |
+| 8 | La Violeta Vermut | C/ de Vallehermoso, 62 | Vallehermoso | Canal · Quevedo |
+| 9 | Sifón Bodega Colmado | Plaza del Rey, 4 (en el mapa pone 9) | Chueca | Recoletos |
+| 10 | Bodegas Alfaro | C/ Ave María, 10 | Lavapiés | Lavapiés |
+| 11 | Bodegas El Maño | C/ de la Palma, 64 | Universidad | Tribunal · Noviciado |
+| 12 | Casa Maravillas | C/ de Manuela Malasaña, 13 | Malasaña | Bilbao · San Bernardo |
+| 13 | La Flaca Taberna | C/ de Serrano, 43 | Salamanca | Serrano · Retiro |
+| 14 | Taberna Alma Cheli | C/ de Santa Engracia, 103 | Trafalgar | Ríos Rosas · Alonso Martínez |
+| 15 | Hermanos Vinagre | C/ Argumosa, 12 (también Cardenal Cisneros y Narváez) | Lavapiés | Lavapiés · Antón Martín |
+
+Pendiente de aclarar con el plano o en la calle:
+- **Sifón:** la ficha dice Plaza del Rey, 4 y la etiqueta del mapa, Plaza del Rey, 9.
+- **Bodegas Casas** y **Hermanos Vinagre** tienen más de un local: hay que elegir uno para la ruta.
+- **La Ardosa:** el plano la pone en el barrio de Recoletos, aunque en la descripción dice Malasaña.
+
+El plano también trae datos de cada bar que sirven como fun facts propios de esa parada: el año de fundación de cada bar, que el «yayo» (vermut, ginebra y gaseosa) se inventó en Casa Camacho, que La Violeta tiene más de 30 vermuts o que la fachada de azulejos de Bodegas Rosell es de Alfonso Romero.
 
 ## Fun facts (borrador)
 
@@ -92,7 +102,7 @@ El plano tiene 15 barras. No pude descargar el PDF desde el entorno de trabajo, 
 
 ## Pendiente
 
-- Completar los 4 bares que faltan y confirmar las direcciones con el PDF.
+- Sacar las coordenadas de los 15 bares a partir de las direcciones y resolver las dudas de Sifón, Bodegas Casas y Hermanos Vinagre.
 - Personalizar los criterios de la ficha.
 - **Android y web, hallazgo de la prueba:** Android trata como «vibración al tocar» cualquier vibración de menos de 1 s que manda una web. Si ese ajuste está apagado, la ignora (la de 2 s sí vibra). Una web no puede indicar a Android de qué tipo es su vibración; una app nativa sí, por ejemplo como notificación o alarma, y así no depende de ese ajuste. Es otro motivo para hacer la versión final como app nativa.
 - iOS: Safari no permite que una web haga vibrar el móvil. Para iPhone hace falta una app nativa (Core Haptics) o empaquetar la web con Capacitor o React Native.
