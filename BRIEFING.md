@@ -14,7 +14,7 @@ Probador háptico para Android: [`docs/index.html`](docs/index.html), que GitHub
 | Lenguaje háptico | Se prueban tres (A, B y C, abajo) antes de elegir uno. |
 | Ruta | La eligen los usuarios: marcan de 3 a 5 bares y la app los ordena. No se avisa de la distancia: el filtro por barrio ya deja claro dónde está cada bar. |
 | Modo sorpresa | Se activa en la pantalla de selección de bares, antes de ver la ruta. Oculta el orden y el nombre de cada parada hasta llegar. |
-| Horarios | Al planificar se elige día y hora. Si un bar puede estar cerrado a esa hora, o no hay datos, se muestra un aviso, pero se puede seleccionar igualmente. |
+| Horarios | Al planificar se elige día y hora. Si un bar puede estar cerrado a esa hora, o no hay datos, se muestra un aviso, pero se puede seleccionar igualmente. En la ruta, el horario se comprueba a la **hora estimada de llegada a cada bar** (salida + unos 40 min por bar + paseo), porque al último se llega horas después de salir. *Propuesta pendiente de validar.* |
 | Fun facts | Uno por bar, sacado de la descripción del plano oficial. |
 | Ficha | Una ficha corta tras cada bar y un ranking al final de la ruta. |
 
@@ -79,40 +79,32 @@ Los 14 bares de la ruta: los 15 del plano oficial menos Casa Maravillas, que ha 
 | 6 | Bodegas Rosell | C/ del General Lacy, 14 | Delicias | Delicias · Palos de la Frontera |
 | 7 | Bodegas Casas | Av. Ciudad de Barcelona, 23 (y otro local en el 57) | Pacífico | Pacífico |
 | 8 | La Violeta Vermut | C/ de Vallehermoso, 62 | Vallehermoso | Canal · Quevedo |
-| 9 | Sifón Bodega Colmado | Plaza del Rey, 4 (en el mapa pone 9) | Chueca | Recoletos |
+| 9 | Sifón Bodega Colmado | Plaza del Rey, 4 | Chueca | Banco de España · Chueca |
 | 10 | Bodegas Alfaro | C/ Ave María, 10 | Lavapiés | Lavapiés |
 | 11 | Bodegas El Maño | C/ de la Palma, 64 | Universidad | Tribunal · Noviciado |
 | ~~12~~ | ~~Casa Maravillas~~ | cerrado definitivamente | | |
 | 13 | La Flaca Taberna | C/ de Serrano, 43 | Salamanca | Serrano · Retiro |
-| 14 | Taberna Alma Cheli | C/ San Félix, 9 | Arganzuela | [por confirmar] |
+| 14 | Taberna Alma Cheli | C/ San Félix, 9 | Arganzuela | Legazpi |
 | 15 | Hermanos Vinagre | C/ Argumosa, 12 (también Cardenal Cisneros y Narváez) | Lavapiés | Lavapiés · Antón Martín |
 
-Dudas de direcciones:
-- **Sifón:** la ficha dice Plaza del Rey, 4 y la etiqueta del mapa, Plaza del Rey, 9. Time Out también da el 4.
-- **La Flaca:** el plano dice Serrano, 43, pero dos webs la sitúan en Serrano, 45.
-- **La Violeta:** el plano y Time Out dicen Vallehermoso, 62; la ficha de esMADRID, el 60.
-- **Bodegas Casas** y **Hermanos Vinagre** tienen más de un local: en la ruta usamos el del plano.
+Google Maps confirma Sifón en el número 4, La Violeta en el 62 y La Flaca en el 43. En **Bodegas Casas** y **Hermanos Vinagre**, que tienen varios locales, la ruta usa el del plano (Ciudad de Barcelona, 23 y Argumosa, 12).
 
-## Horarios (orientativos, por confirmar en Google Maps)
+## Horarios
 
-No he podido consultar Google Maps desde el entorno de trabajo, así que estos horarios salen de webs que **a menudo no coinciden entre sí**. Sirven para probar el aviso del prototipo, no como dato final. «¿?» = sin datos.
+Los horarios de cada bar, comprobados en Google Maps el 8 de noviembre de 2026, están en [`HORARIOS.md`](HORARIOS.md). Son los que usa el prototipo para avisar de que un bar puede estar cerrado.
 
-| Bar | Horario encontrado | Fuente | Fiabilidad |
-| --- | --- | --- | --- |
-| Bodega de la Ardosa | Todos los días 9:00–2:00 (V y S hasta 2:30) | esMADRID, actualizado en abril de 2026 | Media-alta |
-| Casa Camacho | L–S 12:00–2:00 (V y S hasta 2:30); domingo cerrado | Time Out; varias webs coinciden en el domingo | Media |
-| Taberna Ángel Sierra | Todos los días 12:00–1:00 (V y S hasta 2:30) | Varias webs, no coinciden | Baja |
-| Casa Alberto | M–S 12:00–23:00; D 12:00–16:00; lunes cerrado | esMADRID, actualizado en abril de 2026 | Media-alta |
-| El Anciano Rey de los Vinos | Martes cerrado; horas ¿? | Web oficial (solo el día de descanso) | Media |
-| Bodegas Rosell | M–S 12:00–16:00 y 19:00–24:00; D 12:00–16:00; lunes cerrado | Minube | Media |
-| Bodegas Casas | ¿? | Nada encontrado | — |
-| La Violeta Vermut | Lunes cerrado; M–J 19:00–1:00; V 13:00–2:00; S y D ¿? | Schlouk Map | Baja |
-| Sifón | L–J 10:30–1:00; V y S hasta 2:00; D 10:30–18:00 | Time Out | Media |
-| Bodegas Alfaro | ¿? | Nada fiable encontrado | — |
-| Bodegas El Maño | L–S 12:30–1:00; D ¿? | Schlouk Map | Baja |
-| La Flaca Taberna | ¿? | Nada fiable encontrado | — |
-| Taberna Alma Cheli | ¿? | Nada encontrado para San Félix | — |
-| Hermanos Vinagre (Argumosa) | Abre todos los días; horas ¿? | Time Out (2024) | Baja |
+Días de cierre:
+- **Lunes:** Casa Alberto, Bodegas Rosell, La Violeta y Sifón.
+- **Martes:** El Anciano Rey de los Vinos.
+- **Miércoles:** Casa Camacho y Alma Cheli.
+- **Domingo por la tarde:** Casa Alberto y Bodegas Rosell (abren solo hasta las 16:00); La Violeta cierra a las 16:30.
+- **De martes a jueves, solo por la tarde (desde las 19:00):** La Violeta.
+
+Con dudas:
+- **Casa Camacho:** Google avisa de que «puede estar cerrado», aunque tiene reseñas recientes. Además, Time Out decía que cerraba los domingos y Google dice que cierra los miércoles.
+- **Bodegas Alfaro:** Google no tiene su horario; el de la tabla es de esMADRID (2023).
+- **La Flaca:** según Google, el sábado cierra a las 20:30, aunque otras webs dicen que abre hasta tarde.
+- **Hermanos Vinagre:** su web da un horario algo distinto al de Google.
 
 En la app real, los horarios deberían salir de una fuente que se mantenga al día, como la API de Google Places, para no tener que copiarlos a mano.
 
@@ -137,8 +129,8 @@ En la app real, los horarios deberían salir de una fuente que se mantenga al d�
 
 ## Pendiente
 
-- Sacar las coordenadas de los 14 bares y resolver las dudas de dirección (Sifón, La Flaca y La Violeta).
-- Confirmar los horarios en Google Maps, sobre todo los de fiabilidad baja o sin datos.
+- Sacar las coordenadas de los 14 bares.
+- Confirmar si Casa Camacho sigue abierto (Google avisa de que puede estar cerrado).
 - Personalizar los criterios de la ficha.
 - **Android y web, hallazgo de la prueba:** Android trata como «vibración al tocar» cualquier vibración de menos de 1 s que manda una web. Si ese ajuste está apagado, la ignora (la de 2 s sí vibra). Una web no puede indicar a Android de qué tipo es su vibración; una app nativa sí, por ejemplo como notificación o alarma, y así no depende de ese ajuste. Es otro motivo para hacer la versión final como app nativa.
 - iOS: Safari no permite que una web haga vibrar el móvil. Para iPhone hace falta una app nativa (Core Haptics) o empaquetar la web con Capacitor o React Native.
